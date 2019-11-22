@@ -1,0 +1,2 @@
+# Roboitc Manipulation Capstone Project
+The capstone project for Northwestern Universities Robotic Manipulation course inolves controlling a 5 DOF robotic arm mounted on a mobile robot such that it manipulates a cube from and to specified positions. 
