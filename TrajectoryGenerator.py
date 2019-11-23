@@ -28,7 +28,7 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 
 	Xstart = Xend
 	Xend = np.matmul(Tsc_init, Tce_grasp)
-	Tf = 3
+	Tf = 2
 	#this is the call to position our gripper over the piece 
 	traj_s2 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	to_csv(traj_s2, k, 50, 1, 'a')
@@ -38,6 +38,13 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 	Tf = 5
 	traj_s3 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
 	to_csv(traj_s3, k, 0, 1, 'a')
+
+	Xstart = Xend
+	Xend = np.matmul(Tsc_final, Tce_standoff)
+	Tf = 2
+	traj_s4 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
+	to_csv(traj_s4, k, 0, 1, 'a')
+
 
 if __name__ == '__main__':
 	Tse_init = np.array([[1, 0, 0, 0],
