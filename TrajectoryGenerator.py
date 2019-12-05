@@ -43,7 +43,7 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 	Xend = np.matmul(Tsc_final, Tce_standoff)
 	Tf = 2
 	traj_s4 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
-	to_csv(traj_s4, k, 0, 1, 'a')
+	to_csv(traj_s4, k, 0, 0, 'a')
 
 
 if __name__ == '__main__':
