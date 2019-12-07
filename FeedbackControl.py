@@ -16,6 +16,54 @@ def FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt):
 
 	return V #twist in end effector frame
 
+
+def Jacobian_in_Body_Pinv(q):
+	B_list_arm = np.array([[0,0,0,0,0],
+						  [0,-1,-1,-1,0],
+						  [1,0,0,0,1],
+						  [0,-0.5076,-0.3526,-0.2176,0],
+						  [0.033,0,0,0,0],
+						  [0,0,0,0,0]])
+
+	Tb0 = np.array([[1,0,0,0.1662],
+					[0,1,0,0],
+					[0,0,1,0.0026],
+					[0,0,0,1]])
+
+	#to get T0e
+	M0e = np.array([[1,0,0,0.033],
+					[0,1,0,0],
+					[0,0,1,0.6546],
+					[0,0,0,1]])
+	print(q.shape)
+	T0e = mr.FKinBody(M0e, B_list_arm, q[3:])
+
+	Teb = np.matmul(mr.TransInv(T0e),mr.TransInv(Tb0))
+	l = 0.47/2 
+	w = .3/2
+	r = 0.0475
+
+	F6 = np.zeros((6,4))
+	F6[2:5] = r/4 * np.array([[-1/(l+w), 1/(l+w), 1/(l+w), -1/(l+w)],
+						[1,1,1,1],
+						[-1,1,-1,1]])
+
+	Ad = mr.Adjoint(Teb)
+	Jbase = np.matmul(Ad,F6)
+
+	Jarm = mr.JacobianBody(B_list_arm, q[3:])
+	# print(Jbase)
+	# print(Jarm)
+
+
+	Je = np.concatenate((Jbase, Jarm),1)
+	print("Je is:")
+	#Je = np.around(Je, 3)
+	Je_pinv = np.linalg.pinv(Je)
+
+	return Je_pinv
+
+
 def main():
 	#calculate end effector position based on chassis configuration q, and arm thetalist 
 	q0 = np.array([0,0,0,0,0,0.2,-1.6,0])
@@ -33,17 +81,20 @@ def main():
 				  [-0.985, 0, .17, 0.57],
 				  [0, 0, 0, 1]])
 
-	Kp = np.identity(4)#np.zeros((4,4))
+	Kp = np.identity(4) #np.zeros((4,4))
 	Ki = np.zeros((4,4))
 
 	dt = 0.01
 
 	V_ee =  FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt)
-	# thetadot_list = V_ee[3:]
-	# u = V_ee[:3]
-	# q_list[i] = NextState()
-	print(V_ee)
 
+	Je_pinv = Jacobian_in_Body_Pinv(q0)
+	vels = np.matmul(Je_pinv, V_ee)
+	print("V is:")
+	pprint(V_ee)
+	print("velocities are:")
+	#vels = np.around(vels,4)
+	pprint(vels)
 
 if __name__ == '__main__':
 	main()
