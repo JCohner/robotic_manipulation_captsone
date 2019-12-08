@@ -14,38 +14,43 @@ def to_csv(list,k, gtime, gstate, mode):
 	df.iloc[gtime:, 12] = gstate
 
 	df.to_csv("eggs.csv", header=False, index=False, mode = mode)
+	return df.to_numpy()
 
 def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k):
 	method = 5 #5th order poly
 	Tf = 5
 	N = k
 	
+	traj = pd.DataFrame(np.zeros((4 * k,13)))
+	print(traj.shape)
 	Xstart = Tse_init
 	Xend = np.matmul(Tsc_init, Tce_standoff)
 	#this is the call to position our gripper over the piece 
 	traj_s1 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
-	to_csv(traj_s1, k, 0, 0, 'w')
+	
+	traj.iloc[:100,:] = to_csv(traj_s1, k, 0, 0, 'w')
 
 	Xstart = Xend
 	Xend = np.matmul(Tsc_init, Tce_grasp)
 	Tf = 2
 	#this is the call to position our gripper over the piece 
 	traj_s2 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
-	to_csv(traj_s2, k, 50, 1, 'a')
+	traj.iloc[k:2*k,:] = to_csv(traj_s2, k, 50, 1, 'a')
 
 	Xstart = Xend
 	Xend = np.matmul(Tsc_final,Tce_grasp)
 	Tf = 5
 	traj_s3 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
-	to_csv(traj_s3, k, 0, 1, 'a')
+	traj.iloc[2*k:3*k,:] = to_csv(traj_s3, k, 0, 1, 'a')
 
 	Xstart = Xend
 	Xend = np.matmul(Tsc_final, Tce_standoff)
 	Tf = 2
 	traj_s4 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
-	to_csv(traj_s4, k, 0, 0, 'a')
+	traj.iloc[3*k:4*k,:] = to_csv(traj_s4, k, 0, 0, 'a')
 
-
+	return traj
+	
 if __name__ == '__main__':
 	Tse_init = np.array([[1, 0, 0, 0],
 					     [0, 1, 0, 0],
