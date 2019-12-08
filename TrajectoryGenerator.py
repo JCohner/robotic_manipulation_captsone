@@ -18,44 +18,65 @@ def to_csv(list,k, gtime, gstate, mode):
 
 def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k):
 	method = 5 #5th order poly
-	Tf = 5
+	
 	N = k
 	
-	traj = pd.DataFrame(np.zeros((4 * k,13)))
-	traj_array = np.zeros((400,4,4))
+	traj = pd.DataFrame(np.zeros((6 * k,13)))
+	traj_array = np.zeros((6 * k,4,4))
 
-
-	Xstart = Tse_init
-	Xend = np.matmul(Tsc_init, Tce_standoff)
+	#go to grip position
+	Xstart = Tse_init #initial 
+	Xend = np.matmul(Tsc_init, Tce_standoff) #standoff
+	Tf = 10
 	#this is the call to position our gripper over the piece 
 	traj_s1 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	traj_array[:k,:,:] = traj_s1
 	traj.iloc[:k,:] = to_csv(traj_s1, k, 0, 0, 'w')
 
-	Xstart = Xend
-	Xend = np.matmul(Tsc_init, Tce_grasp)
-	Tf = 2
+	#standoff and grab
+	Xstart = Xend #standoff
+	Xend = np.matmul(Tsc_init, Tce_grasp) #grab
+	Tf = 8
 	#this is the call to position our gripper over the piece 
 	traj_s2 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	traj_array[k:2*k,:,:] = traj_s2
-	traj.iloc[k:2*k,:] = to_csv(traj_s2, k, 50, 1, 'a')
+	traj.iloc[k:2*k,:] = to_csv(traj_s2, k, 95, 1, 'a')
 
-	Xstart = Xend
-	Xend = np.matmul(Tsc_final,Tce_grasp)
-	Tf = 5
-	traj_s3 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
+	#lift it back up
+	Xstart = Xend #grab
+	Xend = np.matmul(Tsc_init, Tce_standoff) #standoff
+	Tf = 10
+	#this is the call to position our gripper over the piece 
+	traj_s3 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	traj_array[2*k:3*k,:,:] = traj_s3
 	traj.iloc[2*k:3*k,:] = to_csv(traj_s3, k, 0, 1, 'a')
 
-	Xstart = Xend
-	Xend = np.matmul(Tsc_final, Tce_standoff)
-	Tf = 2
+	#swing it over to final standoff position
+	Xstart = Xend #standoff
+	Xend = np.matmul(Tsc_final,Tce_standoff)
+	Tf = 100
 	traj_s4 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
 	traj_array[3*k:4*k,:,:] = traj_s4
-	traj.iloc[3*k:4*k,:] = to_csv(traj_s4, k, 0, 0, 'a')
+	traj.iloc[3*k:4*k,:] = to_csv(traj_s4, k, 0, 1, 'a')
+
+	#go to place
+	Xstart = Xend #gripping standoff
+	Xend = np.matmul(Tsc_final,Tce_grasp) #placement
+	Tf = 20
+	traj_s5 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
+	traj_array[4*k:5*k,:,:] = traj_s5
+	traj.iloc[4*k:5*k,:] = to_csv(traj_s5, k, 0, 1, 'a')
+
+	#let go, go back to standoff
+	Xstart = Xend
+	Xend = np.matmul(Tsc_final, Tce_standoff)
+	Tf = 20
+	traj_s6 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
+	traj_array[5*k:6*k,:,:] = traj_s6
+	traj.iloc[5*k:6*k,:] = to_csv(traj_s6, k, 0, 0, 'a')
 
 	traj.to_csv("eggs.csv", header=False, index=False)
-	return traj_array
+	return traj_array, traj
 
 if __name__ == '__main__':
 	Tse_init = np.array([[1, 0, 0, 0],
