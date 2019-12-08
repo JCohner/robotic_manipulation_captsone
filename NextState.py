@@ -14,13 +14,12 @@ def NextState(q, thetadot, dt, omega_max):
 		if x > omega_max:
 			thetadot[i] = thetadot[i]/float(x) * omega_max
 	q_new = np.zeros(13)
-	q_new[3:8] = q[3:8] + thetadot[0:5] * dt
-	q_new[8:12] = q[8:12] + thetadot[5:9] * dt
+	q_new[3:8] = q[3:8] + thetadot[4:] * dt
+	q_new[8:12] = q[8:12] + thetadot[:4] * dt
 	l = 0.47/2 
 	w = .3/2
 	H_mat = np.array([[-1/(l+w), 1/(l+w), 1/(l+w), -1/(l+w)],[1,1,1,1],[-1,1,-1,1]])
-	q_new[0:3] = 0.0475/4. * np.matmul(H_mat, thetadot[5:9]) * dt + q[0:3]
-
+	q_new[0:3] = 0.0475/4. * np.matmul(H_mat, thetadot[:4]) * dt + q[0:3]
 	#return the new configuration
 	return q_new
 
@@ -39,5 +38,6 @@ def main():
 		q_list[i] = NextState(q_list[i-1], u_list, dt, omega_max)
 	# NextState(q_list[0], u_list, dt, omega_max)
 	to_csv(q_list)
+
 if __name__ == '__main__':
 	main()

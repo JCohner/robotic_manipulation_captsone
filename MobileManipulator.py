@@ -7,10 +7,40 @@ import pandas as pd
 import modern_robotics as mr
 
 def main():
-	Tse_init = np.array([[1, 0, 0, 0],
-					     [0, 1, 0, 0],
-					     [0, 0, 1, 0.4],
-					     [0, 0, 0, 1,]])
+	q0 = np.array([0,0,0,
+				   0,0,0.2,-1.6,0,
+				   0,0,0,0,
+				   0])
+
+	B_list_arm = np.array([[0,0,0,0,0],
+						  [0,-1,-1,-1,0],
+						  [1,0,0,0,1],
+						  [0,-0.5076,-0.3526,-0.2176,0],
+						  [0.033,0,0,0,0],
+						  [0,0,0,0,0]])
+
+	Tsb = np.array([[np.cos(q0[0]),-np.sin(q0[0]),0,q0[1]],
+					[np.sin(q0[0]),np.cos(q0[0]),0,q0[2]],
+					[0,0,1,0.0963],
+					[0,0,0,1]])
+
+	Tb0 = np.array([[1,0,0,0.1662],
+					[0,1,0,0],
+					[0,0,1,0.0026],
+					[0,0,0,1]])
+
+	M0e = np.array([[1,0,0,0.033],
+					[0,1,0,0],
+					[0,0,1,0.6546],
+					[0,0,0,1]])
+	T0e = mr.FKinBody(M0e, B_list_arm, q0[3:8])
+
+	# Tse_init = np.array([[1, 0, 0, 0.2],
+	# 				     [0, 1, 0, 0],
+	# 				     [0, 0, 1, 0.653],
+	# 				     [0, 0, 0, 1,]])
+	Tse_init = np.matmul(np.matmul(Tsb,Tb0),T0e)
+
 
 	Tsc_init = np.array([[1, 0, 0, 1],
 				   	 	 [0, 1, 0, 0],
@@ -35,25 +65,22 @@ def main():
 
 	k = 100
 	dt = 0.01
+	omega_max = 5
 
-	Kp = np.zeros((4,4))
+	Kp = np.identity(4) * 10 #np.zeros((4,4))
 	Ki = np.zeros((4,4))
 
 	Te_traj = TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k)
 
-	q0 = np.array([0,0,0,
-				   0,0,0.2,-1.6,
-				   0,0,0,0,
-				   0])
-
 	config = pd.DataFrame(np.zeros((4*k,13)))
-	config.iloc[0,:12] = q0
+	xerr = np.zeros((6,4*k))
+	config.iloc[0,:] = q0
 
 	for i in range(1,4*k-1):
 		q = config.iloc[i-1,:].to_numpy()
 		
 		#get twist to next pose using feedback control
-		Je_pinv, Tbe = Jacobian_in_Body_Pinv(q)
+		Je_pinv, Tbe = Jacobian_in_Body_Pinv(q[:8])
 		Xd = Te_traj[i,:,:]
 		Xd_next = Te_traj[i+1,:,:] 
 		Tsb = np.array([[np.cos(q[0]),-np.sin(q[0]),0,q[1]],
@@ -61,10 +88,12 @@ def main():
 					[0,0,1,0.0963],
 					[0,0,0,1]])
 		X = np.matmul(Tsb,Tbe)
-		Ve = FeedbackControl(X,Xd,Xd_next,Kp,Ki,dt)
-
-		vels = np.matmul(Je_pinv, Ve)
+		Ve, Xerr = FeedbackControl(X,Xd,Xd_next,Kp,Ki,dt)
+		xerr[:,-i] = Xerr
+		vels = np.matmul(Je_pinv, Ve) #TODO: make sure this is returning velocities in the same way NextState expects them
 		#put vels in to get next state
+		config.iloc[i,:] = NextState(q, vels, dt, omega_max) 
 
+	config.to_csv("chungus.csv", header=False, index=False)
 if __name__ == '__main__':
 	main()

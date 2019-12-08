@@ -1,6 +1,5 @@
 import modern_robotics as mr
 import numpy as np
-from NextState import NextState
 from pprint import pprint
 
 e_int = np.zeros((4,4))
@@ -14,7 +13,7 @@ def FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt):
 	e_int = e_int + Xerr * dt
 	V = np.matmul(mr.Adjoint(np.matmul(mr.TransInv(X),Xd)), Vd) + mr.se3ToVec(np.matmul(Kp, Xerr)) + mr.se3ToVec(np.matmul(Ki,e_int))
 
-	return V #twist in end effector frame
+	return V, mr.se3ToVec(Xerr) #twist in end effector frame
 
 
 def Jacobian_in_Body_Pinv(q):
@@ -35,7 +34,7 @@ def Jacobian_in_Body_Pinv(q):
 					[0,1,0,0],
 					[0,0,1,0.6546],
 					[0,0,0,1]])
-	print(q.shape)
+	# print(q.shape)
 	T0e = mr.FKinBody(M0e, B_list_arm, q[3:])
 
 	Teb = np.matmul(mr.TransInv(T0e),mr.TransInv(Tb0))
@@ -52,21 +51,18 @@ def Jacobian_in_Body_Pinv(q):
 	Jbase = np.matmul(Ad,F6)
 
 	Jarm = mr.JacobianBody(B_list_arm, q[3:])
-	# print(Jbase)
-	# print(Jarm)
 
 
 	Je = np.concatenate((Jbase, Jarm),1)
-	print("Je is:")
-	#Je = np.around(Je, 3)
-	Je_pinv = np.linalg.pinv(Je)
+	Je_pinv = np.linalg.pinv(Je,1e-4)
 
-	return Je_pinv
+	return Je_pinv, mr.TransInv(Teb)
 
 
 def main():
 	#calculate end effector position based on chassis configuration q, and arm thetalist 
 	q0 = np.array([0,0,0,0,0,0.2,-1.6,0])
+	#X - Tse, Xd; Tse_d; Xd_next - Tse_d,next; 
 	Xd = np.array([[0,0,1,0.5],
 				   [0,1,0,0],
 				   [-1,0,0,0.5],
@@ -86,9 +82,9 @@ def main():
 
 	dt = 0.01
 
-	V_ee =  FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt)
+	V_ee, err =  FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt)
 
-	Je_pinv = Jacobian_in_Body_Pinv(q0)
+	Je_pinv, other = Jacobian_in_Body_Pinv(q0)
 	vels = np.matmul(Je_pinv, V_ee)
 	print("V is:")
 	pprint(V_ee)
