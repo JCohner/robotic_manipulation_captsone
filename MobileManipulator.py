@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import modern_robotics as mr
 
+import matplotlib.pyplot as plt
 def main():
 	q0 = np.array([0,0,0,
 				   0,0,0.2,-1.6,0,
@@ -57,26 +58,28 @@ def main():
 						  [-1/np.sqrt(2), 0, -1/np.sqrt(2), 0],
 						  [0, 0, 0, 1]])
 
-	Tce_standoff = np.array([[-1/np.sqrt(2), 0, 1/np.sqrt(2), -.025],
+	Tce_standoff = np.array([[-1/np.sqrt(2), 0, 1/np.sqrt(2), -.05],
 						  [0, 1, 0, 0],
-						  [-1/np.sqrt(2), 0, -1/np.sqrt(2), .025],
+						  [-1/np.sqrt(2), 0, -1/np.sqrt(2), .05],
 						  [0, 0, 0, 1]])
 
 
-	k = 100
+	k = 200
 	dt = 0.01
 	omega_max = 5
 
 	Kp = np.identity(4) * 10 #np.zeros((4,4))
-	Ki = np.zeros((4,4))
+	Ki = np.identity(4) * 1
 
 	Te_traj, traj_df = TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k)
 
-	config = pd.DataFrame(np.zeros((4*k,13)))
-	xerr = np.zeros((6,4*k))
+	print(traj_df.shape)
+
+	config = pd.DataFrame(np.zeros((7*k,13)))
+	xerr = np.zeros((6,7*k))
 	config.iloc[0,:] = q0
 
-	for i in range(1,4*k-1):
+	for i in range(1,6*k-1):
 		q = config.iloc[i-1,:].to_numpy()
 		
 		#get twist to next pose using feedback control
