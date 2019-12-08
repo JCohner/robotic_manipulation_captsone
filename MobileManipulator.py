@@ -70,7 +70,7 @@ def main():
 	Kp = np.identity(4) * 10 #np.zeros((4,4))
 	Ki = np.zeros((4,4))
 
-	Te_traj = TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k)
+	Te_traj, traj_df = TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k)
 
 	config = pd.DataFrame(np.zeros((4*k,13)))
 	xerr = np.zeros((6,4*k))
@@ -93,6 +93,9 @@ def main():
 		vels = np.matmul(Je_pinv, Ve) #TODO: make sure this is returning velocities in the same way NextState expects them
 		#put vels in to get next state
 		config.iloc[i,:] = NextState(q, vels, dt, omega_max) 
+		if traj_df.iloc[i,12] == 1:
+			config.iloc[i,12] = 1
+
 
 	config.to_csv("chungus.csv", header=False, index=False)
 if __name__ == '__main__':
