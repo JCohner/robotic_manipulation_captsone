@@ -8,8 +8,8 @@ import modern_robotics as mr
 
 import matplotlib.pyplot as plt
 def main():
-	q0 = np.array([0,0,0,
-				   0,0,0.2,-1.6,0,
+	q0 = np.array([np.pi/6.,.2,-.2,
+				   0,0,0.2,0,0,
 				   0,0,0,0,
 				   0])
 
@@ -32,15 +32,15 @@ def main():
 
 	M0e = np.array([[1,0,0,0.033],
 					[0,1,0,0],
-					[0,0,1,0.6546],
+					[0,0,1,0.5],
 					[0,0,0,1]])
 	T0e = mr.FKinBody(M0e, B_list_arm, q0[3:8])
 
-	# Tse_init = np.array([[1, 0, 0, 0.2],
-	# 				     [0, 1, 0, 0],
-	# 				     [0, 0, 1, 0.653],
-	# 				     [0, 0, 0, 1,]])
-	Tse_init = np.matmul(np.matmul(Tsb,Tb0),T0e)
+	Tse_init = np.array([[0, 0, 1, 0.0],
+					     [0, 1, 0, 0],
+					     [-1, 0, 0, 0.653],
+					     [0, 0, 0, 1,]])
+	# Tse_init = np.matmul(np.matmul(Tsb,Tb0),T0e)
 
 
 	Tsc_init = np.array([[1, 0, 0, 1],
@@ -68,8 +68,8 @@ def main():
 	dt = 0.01
 	omega_max = 5
 
-	Kp = np.identity(4) * 10 #np.zeros((4,4))
-	Ki = np.identity(4) * 1
+	Kp = np.identity(4) * 3 #np.zeros((4,4))
+	Ki = np.identity(4) * .1
 
 	Te_traj, traj_df = TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, k)
 

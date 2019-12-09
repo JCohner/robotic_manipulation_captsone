@@ -2,7 +2,7 @@ import modern_robotics as mr
 import numpy as np
 import pandas as pd
 
-def to_csv(list,k, gtime, gstate, mode):
+def to_csv(list,k, gtime, gstate, mode, end=False):
 	traj = np.array(list).reshape(k,-1)
 	df = pd.DataFrame(np.zeros((k,13)))
 	df.iloc[:,:3] = traj[:,:3]
@@ -12,6 +12,8 @@ def to_csv(list,k, gtime, gstate, mode):
 	df.iloc[:,10] = traj[:,7]
 	df.iloc[:,11] = traj[:,11]
 	df.iloc[gtime:, 12] = gstate
+	if end:
+		df.iloc[:gtime, 12] = 1
 
 	df.to_csv("eggs.csv", header=False, index=False, mode = mode)
 	return df.to_numpy()
@@ -40,7 +42,7 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 	#this is the call to position our gripper over the piece 
 	traj_s2 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	traj_array[k:2*k,:,:] = traj_s2
-	traj.iloc[k:2*k,:] = to_csv(traj_s2, k, 95, 1, 'a')
+	traj.iloc[k:2*k,:] = to_csv(traj_s2, k, 0, 0, 'a')
 
 	#lift it back up
 	Xstart = Xend #grab
@@ -49,7 +51,7 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 	#this is the call to position our gripper over the piece 
 	traj_s3 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method) 
 	traj_array[2*k:3*k,:,:] = traj_s3
-	traj.iloc[2*k:3*k,:] = to_csv(traj_s3, k, 0, 1, 'a')
+	traj.iloc[2*k:3*k,:] = to_csv(traj_s3, k, 8, 1, 'a', end=True)
 
 	#swing it over to final standoff position
 	Xstart = Xend #standoff
@@ -73,7 +75,7 @@ def TrajectoryGenerator(Tse_init, Tsc_init, Tsc_final, Tce_grasp, Tce_standoff, 
 	Tf = 20
 	traj_s6 = mr.ScrewTrajectory(Xstart, Xend, Tf, N, method)
 	traj_array[5*k:6*k,:,:] = traj_s6
-	traj.iloc[5*k:6*k,:] = to_csv(traj_s6, k, 0, 0, 'a')
+	traj.iloc[5*k:6*k,:] = to_csv(traj_s6, k, 30, 0, 'a', end=True)
 
 	traj.to_csv("eggs.csv", header=False, index=False)
 	return traj_array, traj
