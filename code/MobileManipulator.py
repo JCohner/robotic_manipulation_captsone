@@ -9,6 +9,13 @@ import pandas as pd
 import modern_robotics as mr
 import matplotlib.pyplot as plt
 import sys
+import logging
+logger = logging.getLogger("my_log")
+handler = logging.FileHandler('best.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 def main():
 	#initial configuration
@@ -74,7 +81,7 @@ def main():
 
 	#Terms for feeback control to calculate velocity
 	omega_max = 5
-	Kp = np.identity(4) * 3 #np.zeros((4,4))
+	Kp = np.identity(4) * 30 #np.zeros((4,4))
 	Ki = np.identity(4) * .1
 
 	#generation of trajectory
@@ -86,6 +93,7 @@ def main():
 	config.iloc[0,:] = q0
 
 	#simulation loop
+	logger.info("Generating Trajectory...")
 	for i in range(1,6*k-1):
 		q = config.iloc[i-1,:].to_numpy()
 		
@@ -103,7 +111,7 @@ def main():
 		X = np.matmul(Tsb,Tbe)
 		#get desired twist of end effector and corresponding calculated error
 		Ve, Xerr = FeedbackControl(X,Xd,Xd_next,Kp,Ki,dt)
-		xerr[:,-i] = Xerr
+		xerr[:,i] = Xerr
 		#calculate corresponding velocities
 		vels = np.matmul(Je_pinv, Ve) 		
 		#put vels in to get next state
@@ -111,12 +119,28 @@ def main():
 		if traj_df.iloc[i,12] == 1:
 			config.iloc[i,12] = 1
 
-	if (sys.argv[1]):
+	if (len(sys.argv) > 1):
 		name = sys.argv[1]
 	else:
 		name = 'eggs'
-		
-	#output to csv
+
+	#output trajectory to csv
+	logger.info('Outputting trajectory to csv')
 	config.to_csv("{}.csv".format(name), header=False, index=False)
+
+	#plot and output xerr
+	xerr_df = pd.DataFrame(xerr)
+	logger.info('Outputting error csv')
+	xerr_df.to_csv("{}_error.csv".format(name), header=False, index=False)
+	length = xerr.shape[1]
+	
+	tvec = np.arange(0,14,dt)
+	for i in range(6):
+		plt.plot(tvec,xerr[i,:])
+	plt.legend(['w_x','w_y','w_z','v_x','v_y','v_z'])
+	plt.title("error over time")
+	plt.ylabel("error")
+	plt.xlabel("time [s]") 
+	plt.show()
 if __name__ == '__main__':
 	main()

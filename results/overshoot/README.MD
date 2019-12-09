@@ -1,0 +1,2 @@
+# Overshoot README
+By attempting to set my PI gains to overshoot, with a Kp of 30 and a Ki of .1, besides the intitally jerky behavior and some jerky behavior during the long traversal, overall the behavior was very satisfactory and it could be argued (if safety tolerances allowed) that the performance rivals that of best
