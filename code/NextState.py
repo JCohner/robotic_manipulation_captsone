@@ -2,6 +2,7 @@ import modern_robotics as mr
 import numpy as np
 import pandas as pd
 
+#dumps to csv
 def to_csv(p_list):
 	df = pd.DataFrame(p_list)
 	df.to_csv("eggs.csv", header=False, index=False)

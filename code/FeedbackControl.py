@@ -1,9 +1,11 @@
+#python imports
 import modern_robotics as mr
 import numpy as np
 from pprint import pprint
 
 e_int = np.zeros((4,4))
 
+#Calculates velocities to be commanded due to current error from desired trajectory
 #X - Tse, Xd; Tse_d; Xd_next - Tse_d,next; 
 def FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt):
 	global e_int
@@ -15,7 +17,7 @@ def FeedbackControl(X, Xd, Xd_next, Kp, Ki, dt):
 
 	return V, mr.se3ToVec(Xerr) #twist in end effector frame
 
-
+#calculates the jacobian in the body frame and its inverse
 def Jacobian_in_Body_Pinv(q):
 	B_list_arm = np.array([[0,0,0,0,0],
 						  [0,-1,-1,-1,0],
