@@ -1,0 +1,2 @@
+# NewTask Readme
+To test the robustness of our controller design, a new task was implemented with the same tuned Kp and Ki variables. This task had the cube a meter away from where the cube that the parameters were tuned for was. 
